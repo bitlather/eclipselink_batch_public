@@ -18,8 +18,10 @@ public class Main {
     private static EntityManagerFactory factory;
 
     public static void main(String[] args) {
-    	basicTest();
-    	int[] successes = preparedBatchTest(1000);
+    	//basicTest();
+    	int count = 1000;
+    	batchTest(count);
+    	int[] successes = preparedBatchTest(count);
     	String successes_string = "";
     	for (int i = 0; i < successes.length; i++) {
     		successes_string += successes[i] + " ";
@@ -56,7 +58,7 @@ public class Main {
    	        int[] inserted = preparedStatement.executeBatch();
    	        long end = System.currentTimeMillis();
 
-   	        System.out.println("total time taken to insert the batch of " + records + " = " + (end - start) + " ms");
+   	        System.out.println("total time taken to insert the prepared batch of " + records + " = " + (end - start) + " ms");
    	        System.out.println("total time taken = " + (end - start)/records + " s");
 
    	        preparedStatement.close();
@@ -72,6 +74,44 @@ public class Main {
    	        }
    	        throw new RuntimeException("Error");
    	    }
+    }
+
+    private static void batchTest(int records) {
+        PreparedStatement statement;
+
+        try {
+            Connection connection = getDatabaseConnection();
+            connection.setAutoCommit(true);
+
+   	        String compiledQuery = "INSERT INTO todo(summary, description)" +
+   	                " VALUES" + "(?, ?)";
+            statement = connection.prepareStatement(compiledQuery);
+
+            long start = System.currentTimeMillis();
+
+            for(int index = 1; index < records; index++) {
+            	statement.setString(1, "summary-"+index);
+            	statement.setString(2, "description-"+index);
+
+                long startInternal = System.currentTimeMillis();
+                statement.executeUpdate();
+                //System.out.println("each transaction time taken = " + (System.currentTimeMillis() - startInternal) + " ms");
+            }
+
+            long end = System.currentTimeMillis();
+            System.out.println("total time taken for non-prepared batch of " + records + " = " + (end - start) + " ms");
+            System.out.println("avg total time taken = " + (end - start)/ records + " ms");
+
+            statement.close();
+            connection.close();
+
+        } catch (SQLException ex) {
+            System.err.println("SQLException information");
+            while (ex != null) {
+                System.err.println("Error msg: " + ex.getMessage());
+                ex = ex.getNextException();
+            }
+        }
     }
     
     private static Connection getDatabaseConnection() {
