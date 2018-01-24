@@ -14,6 +14,11 @@ public class Main {
     private static EntityManagerFactory factory;
 
     public static void main(String[] args) {
+    	basicTest();
+    
+    }
+    	
+    private static void basicTest() {
         factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
         EntityManager em = factory.createEntityManager();
         // read the existing entries and write to console

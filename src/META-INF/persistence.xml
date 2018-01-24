@@ -14,6 +14,10 @@
   <!-- EclipseLink should create the database schema automatically -->
   <property name="eclipselink.ddl-generation" value="create-tables" />
   <property name="eclipselink.ddl-generation.output-mode" value="both" />
+  
+  <!-- Batch Writing http://java-persistence-performance.blogspot.ch/2013/05/batch-writing-and-dynamic-vs.html -->
+  <property name="eclipselink.jdbc.batch-writing" value="JDBC" /> 
+  <property name="eclipselink.jdbc.batch-writing.size" value="1000" />
  </properties>
 
     </persistence-unit>
