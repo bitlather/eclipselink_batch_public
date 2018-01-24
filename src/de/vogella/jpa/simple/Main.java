@@ -1,5 +1,9 @@
 package de.vogella.jpa.simple;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -15,7 +19,75 @@ public class Main {
 
     public static void main(String[] args) {
     	basicTest();
+    	int[] successes = preparedBatchTest(1000);
+    	String successes_string = "";
+    	for (int i = 0; i < successes.length; i++) {
+    		successes_string += successes[i] + " ";
+    	}
+    	System.out.println("Success? "+successes_string);
     
+    }
+    
+    private static int[] preparedBatchTest(int records) {
+    	//
+    	// From post on
+    	//
+    	//    https://stackoverflow.com/questions/3784197/efficient-way-to-do-batch-inserts-with-jdbc
+    	//    (specifically this response: https://stackoverflow.com/a/42756134)
+    	//
+    	//*DTA NOTE MUST DO THIS WITH POSTGRESQL INSTEAD OF DERBY!!!
+  	    PreparedStatement preparedStatement;
+
+   	    try {
+   	        Connection connection = getDatabaseConnection();
+   	        connection.setAutoCommit(true);
+
+   	        String compiledQuery = "INSERT INTO todo(summary, description)" +
+   	                " VALUES" + "(?, ?)";
+   	        preparedStatement = connection.prepareStatement(compiledQuery);
+
+   	        for(int index = 1; index <= records; index++) {
+   	            preparedStatement.setString(1, "summary-"+index);
+   	            preparedStatement.setString(2, "description-"+index);
+   	            preparedStatement.addBatch();
+   	        }
+
+   	        long start = System.currentTimeMillis();
+   	        int[] inserted = preparedStatement.executeBatch();
+   	        long end = System.currentTimeMillis();
+
+   	        System.out.println("total time taken to insert the batch of " + records + " = " + (end - start) + " ms");
+   	        System.out.println("total time taken = " + (end - start)/records + " s");
+
+   	        preparedStatement.close();
+   	        connection.close();
+
+   	        return inserted;
+
+   	    } catch (SQLException ex) {
+   	        System.err.println("SQLException information");
+   	        while (ex != null) {
+   	            System.err.println("Error msg: " + ex.getMessage());
+   	            ex = ex.getNextException();
+   	        }
+   	        throw new RuntimeException("Error");
+   	    }
+    }
+    
+    private static Connection getDatabaseConnection() {
+        String dbURL = "jdbc:derby:/home/dave/databases/simpleDb;create=true;user=test;password=test";
+        try
+        {
+            Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
+            //Get a connection
+            Connection conn = DriverManager.getConnection(dbURL);
+            return conn;
+        }
+        catch (Exception except)
+        {
+            except.printStackTrace();
+        }
+        return null;
     }
     	
     private static void basicTest() {
