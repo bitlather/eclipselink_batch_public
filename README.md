@@ -4,6 +4,9 @@ http://www.vogella.com/tutorials/JavaPersistenceAPI/article.html
 and:
 http://java-persistence-performance.blogspot.ch/2013/05/batch-writing-and-dynamic-vs.html
 
+**Be sure to review:**
+https://www.mkyong.com/jdbc/jdbc-preparedstatement-example-batch-update/
+
 
 Create Postgresql Database
 ==========================
