@@ -19,11 +19,12 @@ public class Main {
 
     public static void main(String[] args) {
     	Connection conn = getPostgresDatabaseConnection();
+    	
     	/*
     	//basicTest();
     	int count = 1000;
-    	batchTest(count);
-    	int[] successes = preparedBatchTest(count);
+    	batchTest(getDerbyDatabaseConnection(), count);
+    	int[] successes = preparedBatchTest(getDerbyDatabaseConnection(), count);
     	String successes_string = "";
     	for (int i = 0; i < successes.length; i++) {
     		successes_string += successes[i] + " ";
@@ -32,7 +33,7 @@ public class Main {
     	 */
     }
     
-    private static int[] preparedBatchTest(int records) {
+    private static int[] preparedBatchTest(Connection connection, int records) {
     	//
     	// From post on
     	//
@@ -43,7 +44,6 @@ public class Main {
   	    PreparedStatement preparedStatement;
 
    	    try {
-   	        Connection connection = getDerbyDatabaseConnection();
    	        connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -78,11 +78,10 @@ public class Main {
    	    }
     }
 
-    private static void batchTest(int records) {
+    private static void batchTest(Connection connection, int records) {
         PreparedStatement statement;
 
         try {
-            Connection connection = getDerbyDatabaseConnection();
             connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -107,6 +106,16 @@ public class Main {
             statement.close();
             connection.close();
 
+        } catch (SQLException ex) {
+            System.err.println("SQLException information");
+            while (ex != null) {
+                System.err.println("Error msg: " + ex.getMessage());
+                ex = ex.getNextException();
+            }
+        }
+        
+        try {
+        	connection.setAutoCommit(false); //*DTA probably need to do this too - not sure what rammifications are yet. Might be good to have a separate "batch" connection for this in actual app?
         } catch (SQLException ex) {
             System.err.println("SQLException information");
             while (ex != null) {
