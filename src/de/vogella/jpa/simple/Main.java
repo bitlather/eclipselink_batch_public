@@ -23,10 +23,11 @@ public class Main {
     }
     
     private static void runPostgresql() {
+    	System.out.println("POSTGRES");
     	//basicTest();
-    	int count = 1000;
-    	batchTest(getPostgresDatabaseConnection(), count);
-    	int[] successes = preparedBatchTest(getPostgresDatabaseConnection(), count);
+    	int count = 5;
+    	postgresBatchTest(count);
+    	int[] successes = postgresPreparedBatchTest(count);
     	String successes_string = "";
     	for (int i = 0; i < successes.length; i++) {
     		successes_string += successes[i] + " ";
@@ -35,10 +36,11 @@ public class Main {
     }
     
     private static void runDerby() {
+    	System.out.println("DERBY");
     	//basicTest();
     	int count = 1000;
-    	batchTest(getDerbyDatabaseConnection(), count);
-    	int[] successes = preparedBatchTest(getDerbyDatabaseConnection(), count);
+    	derbyBatchTest(count);
+    	int[] successes = derbyPreparedBatchTest(count);
     	String successes_string = "";
     	for (int i = 0; i < successes.length; i++) {
     		successes_string += successes[i] + " ";
@@ -46,17 +48,108 @@ public class Main {
     	System.out.println("Success? "+successes_string);
     }
     
-    private static int[] preparedBatchTest(Connection connection, int records) {
+    private static int[] postgresPreparedBatchTest(int records) {
     	//
     	// From post on
     	//
     	//    https://stackoverflow.com/questions/3784197/efficient-way-to-do-batch-inserts-with-jdbc
     	//    (specifically this response: https://stackoverflow.com/a/42756134)
     	//
-    	//*DTA NOTE MUST DO THIS WITH POSTGRESQL INSTEAD OF DERBY!!!
   	    PreparedStatement preparedStatement;
 
    	    try {
+   	    	Connection connection = getPostgresDatabaseConnection();
+   	        connection.setAutoCommit(true);
+
+   	        String compiledQuery = "INSERT INTO parent(parent_id)" +
+   	                " VALUES" + "(?)";
+   	        preparedStatement = connection.prepareStatement(compiledQuery);
+
+   	        for(int index = 1; index <= records; index++) {
+   	            preparedStatement.setString(1, "id-"+index);
+   	            preparedStatement.addBatch();
+   	        }
+
+   	        long start = System.currentTimeMillis();
+   	        int[] inserted = preparedStatement.executeBatch();
+   	        long end = System.currentTimeMillis();
+
+   	        System.out.println("total time taken to insert the prepared batch of " + records + " = " + (end - start) + " ms");
+   	        System.out.println("total time taken = " + (end - start)/records + " s");
+
+   	        preparedStatement.close();
+   	        connection.close();
+
+   	        return inserted;
+
+   	    } catch (SQLException ex) {
+   	        System.err.println("SQLException information");
+   	        while (ex != null) {
+   	            System.err.println("Error msg: " + ex.getMessage());
+   	            ex = ex.getNextException();
+   	        }
+   	        throw new RuntimeException("Error");
+   	    }
+    }
+
+    private static void postgresBatchTest(int records) {
+        PreparedStatement statement;
+
+        try {
+        	Connection connection = getPostgresDatabaseConnection();
+            connection.setAutoCommit(true);
+
+   	        String compiledQuery = "INSERT INTO parent(parent_id)" +
+   	                " VALUES" + "(?)";
+            statement = connection.prepareStatement(compiledQuery);
+
+            long start = System.currentTimeMillis();
+
+            for(int index = 1; index < records; index++) {
+            	statement.setString(1, "id-"+index);
+
+                long startInternal = System.currentTimeMillis();
+                statement.executeUpdate();
+                //System.out.println("each transaction time taken = " + (System.currentTimeMillis() - startInternal) + " ms");
+            }
+
+            long end = System.currentTimeMillis();
+            System.out.println("total time taken for non-prepared batch of " + records + " = " + (end - start) + " ms");
+            System.out.println("avg total time taken = " + (end - start)/ records + " ms");
+
+            statement.close();
+            connection.close();
+
+        } catch (SQLException ex) {
+            System.err.println("SQLException information");
+            while (ex != null) {
+                System.err.println("Error msg: " + ex.getMessage());
+                ex = ex.getNextException();
+            }
+        }
+        
+        //try {
+        //	connection.setAutoCommit(false); //*DTA probably need to do this too - not sure what rammifications are yet. Might be good to have a separate "batch" connection for this in actual app?
+        //} catch (SQLException ex) {
+        //    System.err.println("SQLException information");
+        //    while (ex != null) {
+        //        System.err.println("Error msg: " + ex.getMessage());
+        //        ex = ex.getNextException();
+        //    }
+        //}
+    }
+    
+    private static int[] derbyPreparedBatchTest(int records) {
+    	//
+    	// From post on
+    	//
+    	//    https://stackoverflow.com/questions/3784197/efficient-way-to-do-batch-inserts-with-jdbc
+    	//    (specifically this response: https://stackoverflow.com/a/42756134)
+    	//
+  	    PreparedStatement preparedStatement;
+
+   	    try {
+   	    	Connection connection = getDerbyDatabaseConnection();
    	        connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -91,10 +184,11 @@ public class Main {
    	    }
     }
 
-    private static void batchTest(Connection connection, int records) {
+    private static void derbyBatchTest(int records) {
         PreparedStatement statement;
 
         try {
+        	Connection connection = getDerbyDatabaseConnection();
             connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -127,15 +221,15 @@ public class Main {
             }
         }
         
-        try {
-        	connection.setAutoCommit(false); //*DTA probably need to do this too - not sure what rammifications are yet. Might be good to have a separate "batch" connection for this in actual app?
-        } catch (SQLException ex) {
-            System.err.println("SQLException information");
-            while (ex != null) {
-                System.err.println("Error msg: " + ex.getMessage());
-                ex = ex.getNextException();
-            }
-        }
+        //try {
+        //	connection.setAutoCommit(false); //*DTA probably need to do this too - not sure what rammifications are yet. Might be good to have a separate "batch" connection for this in actual app?
+        //} catch (SQLException ex) {
+        //    System.err.println("SQLException information");
+        //    while (ex != null) {
+        //        System.err.println("Error msg: " + ex.getMessage());
+        //        ex = ex.getNextException();
+        //    }
+        //}
     }
     
     private static Connection getPostgresDatabaseConnection() {

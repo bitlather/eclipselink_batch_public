@@ -31,7 +31,10 @@ CREATE TABLE child_a (
     description  VARCHAR(255) NULL,
 
     CONSTRAINT child_a_child_a_id_check
-        CHECK (char_length(child_a_id) > 0)
+        CHECK (char_length(child_a_id) > 0),
+
+    CONSTRAINT child_a_child_a_id
+        UNIQUE (child_a_id)
 );
 CREATE INDEX child_a__child_a_id ON child_a(child_a_id);
 ```
@@ -42,7 +45,10 @@ CREATE TABLE child_b (
     description  VARCHAR(255) NULL,
 
     CONSTRAINT child_b_child_b_id_check
-        CHECK (char_length(child_b_id) > 0)
+        CHECK (char_length(child_b_id) > 0),
+
+    CONSTRAINT child_b_child_b_id
+        UNIQUE (child_b_id)
 );
 CREATE INDEX child_b__child_b_id ON child_b(child_b_id);
 ```
@@ -56,6 +62,9 @@ CREATE TABLE parent (
 
     CONSTRAINT parent_parent_id_check
         CHECK (char_length(parent_id) > 0),
+
+    CONSTRAINT parent_parent_id
+        UNIQUE (parent_id),
 
     CONSTRAINT fk_parent_child_a_key
         FOREIGN KEY (child_a_key)
