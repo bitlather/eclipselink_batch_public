@@ -18,6 +18,8 @@ public class Main {
     private static EntityManagerFactory factory;
 
     public static void main(String[] args) {
+    	Connection conn = getPostgresDatabaseConnection();
+    	/*
     	//basicTest();
     	int count = 1000;
     	batchTest(count);
@@ -27,7 +29,7 @@ public class Main {
     		successes_string += successes[i] + " ";
     	}
     	System.out.println("Success? "+successes_string);
-    
+    	 */
     }
     
     private static int[] preparedBatchTest(int records) {
@@ -112,6 +114,23 @@ public class Main {
                 ex = ex.getNextException();
             }
         }
+    }
+    
+    private static Connection getPostgresDatabaseConnection() {
+        //"jdbc:postgresql://localhost:5432/bnr_datamart_dev",
+        //"danny",
+        //"root");
+    	String url = "jdbc:postgresql://localhost:5432/batch_test?user=danny&password=root";
+    	try
+        {
+    		Connection conn = DriverManager.getConnection(url);
+    		return conn;
+        }
+        catch (Exception except)
+        {
+            except.printStackTrace();
+        }
+    	return null;
     }
     
     private static Connection getDerbyDatabaseConnection() {
