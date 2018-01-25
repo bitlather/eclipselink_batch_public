@@ -41,7 +41,7 @@ public class Main {
   	    PreparedStatement preparedStatement;
 
    	    try {
-   	        Connection connection = getDatabaseConnection();
+   	        Connection connection = getDerbyDatabaseConnection();
    	        connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -80,7 +80,7 @@ public class Main {
         PreparedStatement statement;
 
         try {
-            Connection connection = getDatabaseConnection();
+            Connection connection = getDerbyDatabaseConnection();
             connection.setAutoCommit(true);
 
    	        String compiledQuery = "INSERT INTO todo(summary, description)" +
@@ -114,7 +114,7 @@ public class Main {
         }
     }
     
-    private static Connection getDatabaseConnection() {
+    private static Connection getDerbyDatabaseConnection() {
         String dbURL = "jdbc:derby:/home/dave/databases/simpleDb;create=true;user=test;password=test";
         try
         {
