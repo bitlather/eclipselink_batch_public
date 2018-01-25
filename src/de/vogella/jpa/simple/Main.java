@@ -18,9 +18,23 @@ public class Main {
     private static EntityManagerFactory factory;
 
     public static void main(String[] args) {
-    	Connection conn = getPostgresDatabaseConnection();
-    	
-    	/*
+    	runPostgresql();
+    	//runDerby();
+    }
+    
+    private static void runPostgresql() {
+    	//basicTest();
+    	int count = 1000;
+    	batchTest(getPostgresDatabaseConnection(), count);
+    	int[] successes = preparedBatchTest(getPostgresDatabaseConnection(), count);
+    	String successes_string = "";
+    	for (int i = 0; i < successes.length; i++) {
+    		successes_string += successes[i] + " ";
+    	}
+    	System.out.println("Success? "+successes_string);
+    }
+    
+    private static void runDerby() {
     	//basicTest();
     	int count = 1000;
     	batchTest(getDerbyDatabaseConnection(), count);
@@ -30,7 +44,6 @@ public class Main {
     		successes_string += successes[i] + " ";
     	}
     	System.out.println("Success? "+successes_string);
-    	 */
     }
     
     private static int[] preparedBatchTest(Connection connection, int records) {
